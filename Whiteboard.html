@@ -5,7 +5,35 @@
     /* Remove default margins and hide scrollbars */
     body { margin: 0; overflow: hidden; }
     canvas { display: block; cursor: crosshair; }
-    
+    /* Floating Home Button */
+    #home-btn {
+        position: fixed;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%); /* Centers it perfectly */
+        padding: 8px 20px;
+        background-color: rgba(255, 255, 255, 0.9);
+        border: 1px solid #ccc;
+        border-radius: 20px; /* Pill shape */
+        cursor: pointer;
+        font-family: sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        z-index: 1000;
+        transition: all 0.2s ease;
+        text-decoration: none; /* In case you use <a> tag */
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    #home-btn:hover {
+        background-color: #333;
+        color: #fff;
+        transform: translateX(-50%) translateY(2px); /* Subtle press effect */
+    }
     #toolbar {
         position: fixed;
         right: 20px;
@@ -65,22 +93,18 @@
     let inv = 0;
     let NUMBER_OF_MODES = modeTypValue.length;
     let isDrawing = false;
+    // --- Top Floating Home Button ---
+    const topHomeBtn = document.createElement('button');
+    topHomeBtn.id = 'home-btn';
+    topHomeBtn.innerHTML = "<span>&#8592;</span> Back to Portfolio"; // Adds a left arrow arrow symbol
     
-    // document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    // document.createElementNS("http://www.w3.org/2000/svg", "line");
-    // document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
-    // document.createElementNS("http://www.w3.org/2000/svg", "arrow");
+    topHomeBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent drawing dots when clicking
+        window.location.href = "index.html";
+    });
 
-    // svg.addEventListener('wheel',(e)=>{
-    //     if(e.deltaY<0) inc = -1;
-    //     else inc=1;
-    //     if(inc==-1 && mode==0) mode = NUMBER_OF_MODES-1;
-    //     else mode = (mode+inc)%NUMBER_OF_MODES;
-
-    //     modeType.textContent = modeTypValue[mode] + " mode"
-    //     svg.appendChild(modeType);
-    //     console.log("mode is :"+mode);
-    // })
+    document.body.appendChild(topHomeBtn);
+    
     modeTypValue.forEach((type, index) => {
         const btn = document.createElement('button');
         btn.textContent = type;
@@ -122,23 +146,6 @@
     });
 
     svg.addEventListener('mousedown', (e) => {
-        // // Get mouse coordinates relative to the SVG
-        // const rect = svg.getBoundingClientRect();
-        // startX = e.clientX - rect.left;
-        // startY = e.clientY - rect.top;
-
-        // // 1. Create the "New" element once
-        // currentRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-        // currentRect.setAttribute("x", startX);
-        // currentRect.setAttribute("y", startY);
-        // currentRect.setAttribute("width", 0);
-        // currentRect.setAttribute("height", 0);
-        // currentRect.setAttribute("fill", "rgba(52, 152, 219, 0.3)");
-        // currentRect.setAttribute("stroke", "#2980b9");
-        // currentRect.setAttribute("stroke-width", "2");
-
-        // svg.appendChild(currentRect);
-
         startX = e.offsetX;
         startY = e.offsetY;
         isDrawing = true;
@@ -237,20 +244,6 @@
     window.addEventListener('mousemove', (e) => {
         if (!isDrawing) return;
 
-        // const rect = svg.getBoundingClientRect();
-        // const currentX = e.clientX - rect.left;
-        // const currentY = e.clientY - rect.top;
-
-        // // 2. Calculate dimensions (handles drawing in any direction)
-        // const width = Math.abs(currentX - startX);
-        // const height = Math.abs(currentY - startY);
-        // const newX = Math.min(currentX, startX);
-        // const newY = Math.min(currentY, startY);
-
-        // currentRect.setAttribute("x", newX);
-        // currentRect.setAttribute("y", newY);
-        // currentRect.setAttribute("width", width);
-        // currentRect.setAttribute("height", height);
         const crsr = svg.getBoundingClientRect();
         const currentX = e.clientX - crsr.left;
         const currentY = e.clientY - crsr.top;
@@ -316,4 +309,5 @@
 </script>
 
 </body>
+
 </html>
