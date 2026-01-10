@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    /* Remove default margins and hide scrollbars */
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; cursor: crosshair; }
+    
+    #toolbar {
+        position: fixed;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%); /* Centers toolbar vertically */
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 100; /* Ensure it sits above the SVG */
+    }
+
+    .tool-btn {
+        padding: 10px 15px;
+        background-color: white;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: sans-serif;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: background-color 0.2s, color 0.2s;
+    }
+
+    .tool-btn:hover {
+        background-color: #f0f0f0;
+    }
+
+    /* The style for the selected mode */
+    .tool-btn.active {
+        background-color: #3498db; /* Blue */
+        color: white;
+        border-color: #2980b9;
+        font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+    <noscript>
+  <div style="background-color: red; color: white; padding: 20px; text-align: center;">
+    <h1>JavaScript Required</h1>
+    <p>This application requires JavaScript to function. Please enable it in your browser settings.</p>
+  </div>
+</noscript>
+<div id="toolbar"></div>
+<svg id="whiteboard" width="100vw" height="100vh">
+    <text id="modeType" x="20" y="35" style="font: 13px sans-serif;">Please use mouse wheel to change modes easily.</text>
+</svg>
+
+<script>
+    const svg = document.getElementById('whiteboard');
+    const toolbar = document.getElementById('toolbar');
+    const svgNS = "http://www.w3.org/2000/svg";
+    const modeTypValue = ["Line", "Rectangle", "Circle", "Arrow", "Select", "Text"] // Differnrt mode types. Must update if mode changes
+    let shape;
+    let startX = 0;
+    let startY = 0;
+    let mode =0;
+    let inv = 0;
+    let NUMBER_OF_MODES = modeTypValue.length;
+    let isDrawing = false;
+    
+    // document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    // document.createElementNS("http://www.w3.org/2000/svg", "line");
+    // document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+    // document.createElementNS("http://www.w3.org/2000/svg", "arrow");
+
+    // svg.addEventListener('wheel',(e)=>{
+    //     if(e.deltaY<0) inc = -1;
+    //     else inc=1;
+    //     if(inc==-1 && mode==0) mode = NUMBER_OF_MODES-1;
+    //     else mode = (mode+inc)%NUMBER_OF_MODES;
+
+    //     modeType.textContent = modeTypValue[mode] + " mode"
+    //     svg.appendChild(modeType);
+    //     console.log("mode is :"+mode);
+    // })
+    modeTypValue.forEach((type, index) => {
+        const btn = document.createElement('button');
+        btn.textContent = type;
+        btn.classList.add('tool-btn');
+        // Set click listener to switch mode
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent drawing on the canvas when clicking button
+            setMode(index);
+        });
+        toolbar.appendChild(btn);
+    });
+
+    // --- 2. Centralized Mode Switcher Function ---
+    function setMode(newIndex) {
+        // Handle wrap-around logic for the wheel
+        if (newIndex < 0) newIndex = NUMBER_OF_MODES - 1;
+        mode = newIndex % NUMBER_OF_MODES;
+
+        // Update Buttons (Visual Highlight)
+        const buttons = document.querySelectorAll('.tool-btn');
+        buttons.forEach((btn, idx) => {
+            if (idx === mode) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        
+        console.log("Mode switched to: " + mode);
+    }
+
+    // Initialize the UI
+    setMode(0);
+
+    // --- 3. Updated Wheel Event ---
+    svg.addEventListener('wheel', (e) => {
+        let inc = (e.deltaY < 0) ? -1 : 1;
+        setMode(mode + inc);
+    });
+
+    svg.addEventListener('mousedown', (e) => {
+        // // Get mouse coordinates relative to the SVG
+        // const rect = svg.getBoundingClientRect();
+        // startX = e.clientX - rect.left;
+        // startY = e.clientY - rect.top;
+
+        // // 1. Create the "New" element once
+        // currentRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        // currentRect.setAttribute("x", startX);
+        // currentRect.setAttribute("y", startY);
+        // currentRect.setAttribute("width", 0);
+        // currentRect.setAttribute("height", 0);
+        // currentRect.setAttribute("fill", "rgba(52, 152, 219, 0.3)");
+        // currentRect.setAttribute("stroke", "#2980b9");
+        // currentRect.setAttribute("stroke-width", "2");
+
+        // svg.appendChild(currentRect);
+
+        startX = e.offsetX;
+        startY = e.offsetY;
+        isDrawing = true;
+        if(mode==0)
+        {
+            //line functions
+            
+            shape = document.createElementNS(svgNS, "line");
+            shape.setAttribute("x1", startX);
+            shape.setAttribute("y1", startY);
+            shape.setAttribute("x2", startX);
+            shape.setAttribute("y2", startY);
+            shape.setAttribute("style","stroke:black;stroke-width:2")
+        }
+        else if (mode==1) {
+            //Rectangle
+            shape = document.createElementNS(svgNS, "rect");
+            shape.setAttribute("x",startX);
+            shape.setAttribute("y", startY);
+            shape.setAttribute("rx", 10)
+            shape.setAttribute("height", 0);
+            shape.setAttribute("width", 0);
+            shape.setAttribute("stroke", "black");
+            shape.setAttribute("stroke-width", "2");
+            shape.setAttribute("fill", "none");
+        } else if(mode==2) {
+            //ellipse
+            shape = document.createElementNS(svgNS,"ellipse");
+            shape.setAttribute("cx", startX);
+            shape.setAttribute("cy", startY);
+            shape.setAttribute("fill","none");
+            shape.setAttribute("stroke","black");
+            shape.setAttribute("stroke-width", "2");
+        }
+        else if(mode==3)
+        {
+            //Arrow code
+            shape = document.createElementNS(svgNS, "path");
+            shape.setAttribute("stroke","black");
+            shape.setAttribute("stroke-width", "2");
+            shape.setAttribute("fill", "none");
+            // shape.setAttribute('d','M '+startX+' '+startY);
+        }
+        // NEW: Text Mode Logic
+        else if (mode === 5) { 
+        // 1. Create a temporary HTML input at the click location
+        const input = document.createElement("input");
+        input.type = "text";
+        input.style.position = "absolute";
+        input.style.left = e.clientX + "px"; // Use screen coordinates for HTML input
+        input.style.top = e.clientY + "px";
+        input.style.background = "transparent";
+        input.style.border = "1px dashed #333";
+        input.style.font = "16px sans-serif";
+        input.style.outline = "none";
+        input.style.zIndex = "1000"; // Ensure it sits on top
+
+        document.body.appendChild(input);
+        
+        // 2. Auto-focus so you can type immediately
+        setTimeout(() => input.focus(), 0);
+
+        // 3. Define how to save the text
+        const saveText = () => {
+            if (input.value.trim() !== "") {
+                const textEl = document.createElementNS(svgNS, "text");
+                textEl.setAttribute("x", startX); // Use SVG coordinates
+                textEl.setAttribute("y", startY); 
+                textEl.setAttribute("fill", "black");
+                textEl.setAttribute("font-family", "sans-serif");
+                textEl.setAttribute("font-size", "16");
+                // Adjust y slightly so text aligns with where the input box was
+                textEl.setAttribute("dy", "0.8em"); 
+                textEl.textContent = input.value;
+                svg.appendChild(textEl);
+            }
+            // Remove the input box
+            if(input.parentNode) document.body.removeChild(input);
+        };
+
+        // 4. Save when clicking away (blur) or pressing Enter
+        input.addEventListener("blur", saveText);
+        input.addEventListener("keydown", (keyEvent) => {
+            if (keyEvent.key === "Enter") {
+                saveText();
+            }
+        });
+
+        return; // Return early so we don't trigger the drawing logic below
+    }
+    
+    isDrawing = true;
+        svg.appendChild(shape);
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDrawing) return;
+
+        // const rect = svg.getBoundingClientRect();
+        // const currentX = e.clientX - rect.left;
+        // const currentY = e.clientY - rect.top;
+
+        // // 2. Calculate dimensions (handles drawing in any direction)
+        // const width = Math.abs(currentX - startX);
+        // const height = Math.abs(currentY - startY);
+        // const newX = Math.min(currentX, startX);
+        // const newY = Math.min(currentY, startY);
+
+        // currentRect.setAttribute("x", newX);
+        // currentRect.setAttribute("y", newY);
+        // currentRect.setAttribute("width", width);
+        // currentRect.setAttribute("height", height);
+        const crsr = svg.getBoundingClientRect();
+        const currentX = e.clientX - crsr.left;
+        const currentY = e.clientY - crsr.top;
+        if(mode==0)
+        {
+            shape.setAttribute("x2", e.offsetX);
+            shape.setAttribute("y2", e.offsetY);
+        }
+        else if(mode==1)
+        {
+        // 2. Calculate dimensions (handles drawing in any direction)
+        const width = Math.abs(currentX - startX);
+        const height = Math.abs(currentY - startY);
+        const newX = Math.min(currentX, startX);
+        const newY = Math.min(currentY, startY);
+
+        shape.setAttribute("x", newX);
+        shape.setAttribute("y", newY);
+        shape.setAttribute("width", width);
+        shape.setAttribute("height", height);
+        }
+        else if(mode==2)
+        {
+            const minX = Math.min(startX, currentX);
+            const maxX = Math.max(startX, currentX);
+            const minY = Math.min(startY, currentY);
+            const maxY = Math.max(startY, currentY);
+
+            // 2. Center is the midpoint of that box
+            const cx = (minX + maxX) / 2;
+            const cy = (minY + maxY) / 2;
+
+            // 3. Radii are half the width/height
+            const rx = (maxX - minX) / 2;
+            const ry = (maxY - minY) / 2;
+
+            shape.setAttribute("cx", cx);
+            shape.setAttribute("cy", cy);
+            shape.setAttribute("rx", rx);
+            shape.setAttribute("ry", ry);
+        }
+        else (mode==2)
+        {
+            endX = e.clientX;
+            endY = e.clientY;
+            let distance = Math.hypot(Math.abs(startX-endX), Math.abs(startY-endY));
+            let angle = Math.atan2((startY-endY),(startX-endX), );
+            let tiplength = Math.min(distance*0.1, 20);
+            const tipAngle = 5*Math.PI/6;
+            let topTipX = endX - tiplength * Math.cos(angle-tipAngle);
+            let topTipY = endY - tiplength * Math.sin(angle-tipAngle);
+            let downTipX = endX - tiplength * Math.cos(angle+tipAngle);
+            let downTipY = endY - tiplength * Math.sin(angle+tipAngle);
+            shape.setAttribute('d','M '+startX+' '+startY+' L '+endX+' '+ endY+' L '+topTipX + ' '+topTipY+' M '+endX+' '+ endY+' L '+downTipX+' '+ downTipY);
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        // 3. Release the reference so we don't keep resizing it
+        shape = null;
+        isDrawing = false;
+    });
+</script>
+
+</body>
+</html>
